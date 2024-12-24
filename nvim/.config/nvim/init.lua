@@ -5,13 +5,14 @@
 -- Settings {{{
 
 vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
 
 vim.opt.number = true
 vim.opt.wrap = false
 vim.opt.foldmethod = 'marker'
 vim.opt.foldlevel = 0
 
-vim.cmd.colorscheme "vscode"
+-- vim.cmd.colorscheme "vscode"
 
 local opts = { noremap = true, silent = true }
 
@@ -34,84 +35,77 @@ vim.api.nvim_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts
 
 
 
--- packer.nvim {{{
+-- lazy.nvim {{{
 
-local ensure_packer = function()
-	local fn = vim.fn
-	local install_path = fn.stdpath('data') .. '/site/pack/packer/start/packer.nvim'
-	if fn.empty(fn.glob(install_path)) > 0 then
-		fn.system({ 'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path })
-		vim.cmd [[packadd packer.nvim]]
-		return true
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+	local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+	local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+	if vim.v.shell_error ~= 0 then
+		vim.api.nvim_echo({
+			{ "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+			{ out,                            "WarningMsg" },
+			{ "\nPress any key to exit..." },
+		}, true, {})
+		vim.fn.getchar()
+		os.exit(1)
 	end
-	return false
 end
+vim.opt.rtp:prepend(lazypath)
 
-local packer_bootstrap = ensure_packer()
+require("lazy").setup({
+	spec = {
 
-require('packer').startup(function(use)
-	use {
-		'wbthomason/packer.nvim'
-	}
+		-- Treesitter for syntax highlighting
+		{ "nvim-treesitter/nvim-treesitter" },
 
-	use {
-		'nvim-treesitter/nvim-treesitter'
-	}
+		-- Telescope for fuzzy finding
+		{
+			"nvim-telescope/telescope.nvim",
+			dependencies = { "nvim-lua/plenary.nvim" },
+		},
 
+		-- LSP configurations
+		{ "neovim/nvim-lspconfig" },
 
-	use {
-		'nvim-telescope/telescope.nvim',
-		requires = {
-			'nvim-lua/plenary.nvim'
-		}
-	}
+		-- Autocompletion plugins
+		{
+			"hrsh7th/nvim-cmp",
+			dependencies = {
+				"hrsh7th/cmp-nvim-lsp",
+				"hrsh7th/cmp-buffer",
+				"hrsh7th/cmp-path",
+			},
+		},
 
-	use {
-		'neovim/nvim-lspconfig'
-	}
+		-- Filetype icons
+		{ "nvim-tree/nvim-web-devicons" },
 
+		-- Statusline plugin
+		{ "nvim-lualine/lualine.nvim" },
 
-	use {
-		'hrsh7th/nvim-cmp',
-		requires = {
-			'hrsh7th/cmp-nvim-lsp',
-			'hrsh7th/cmp-buffer',
-			'hrsh7th/cmp-path',
-		}
-	}
+		-- Git integration
+		{ "lewis6991/gitsigns.nvim" },
 
-	use {
-		'nvim-tree/nvim-web-devicons'
-	}
+		-- Commenting utility
+		{ "tpope/vim-commentary" },
 
-	use {
-		'nvim-lualine/lualine.nvim',
-	}
+		-- Enhanced % matching
+		{ "andymass/vim-matchup" },
 
-	use {
-		'lewis6991/gitsigns.nvim'
-	}
+		-- -- Auto pair insertion
+		{ "windwp/nvim-autopairs" },
 
-	use {
-		'tpope/vim-commentary'
-	}
-
-	use {
-		'andymass/vim-matchup',
-	}
-
-	use {
-		'windwp/nvim-autopairs',
-	}
-
-	use {
-		'Mofiqul/vscode.nvim'
-	}
-
-	if packer_bootstrap then
-		require('packer').sync()
-	end
-end)
+		-- VS Code-like colorscheme
+		{
+			"Mofiqul/vscode.nvim",
+			lazy = false,
+			config = function()
+				vim.cmd.colorscheme 'vscode'
+			end,
+		},
+	},
+})
 
 -- }}}
 
@@ -138,7 +132,7 @@ vim.keymap.set('n', '<leader>fm', builtin.marks, { desc = 'Telescope find marks'
 vim.keymap.set('n', '<leader>fp', builtin.planets, { desc = 'Telescope list planets' })
 vim.keymap.set('n', '<leader>fk', builtin.keymaps, { desc = 'Telescope list keymaps' })
 vim.keymap.set('n', '<leader>fc', builtin.git_commits, { desc = 'Telescope find git commits' })
-vim.keymap.set('n', '<leader>d',  builtin.diagnostics, { desc = 'Telescope diagnostics' })
+vim.keymap.set('n', '<leader>d', builtin.diagnostics, { desc = 'Telescope diagnostics' })
 
 -- }}}
 
@@ -174,7 +168,7 @@ cmp.setup({
 
 local lspconfig = require('lspconfig')
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
-local language_servers = {'jsonls', 'ts_ls', 'pyright', 'angularls', 'cssls', 'html', 'lua_ls'}
+local language_servers = { 'jsonls', 'ts_ls', 'pyright', 'angularls', 'cssls', 'html', 'lua_ls' }
 for _, value in ipairs(language_servers) do
 	lspconfig[value].setup { capabilities = capabilities }
 end
@@ -204,4 +198,3 @@ require('gitsigns').setup()
 require('nvim-autopairs').setup()
 
 -- }}}
-
