@@ -70,15 +70,31 @@ require('packer').startup(function(use)
 		'neovim/nvim-lspconfig'
 	}
 
-
 	use {
-		'hrsh7th/nvim-cmp',
+		'ms-jpq/coq_nvim',
+		branch = 'coq',
 		requires = {
-			'hrsh7th/cmp-nvim-lsp',
-			'hrsh7th/cmp-buffer',
-			'hrsh7th/cmp-path',
-		}
+			-- 9000+ Snippets
+			{ 'ms-jpq/coq.artifacts',  branch = 'artifacts' },
+
+			-- Lua & third-party sources (configure separately)
+			{ 'ms-jpq/coq.thirdparty', branch = '3p' },
+		},
+		setup = function()
+			vim.g.coq_settings = {
+				auto_start = true, -- Start COQ at startup
+			}
+		end
 	}
+
+	-- use {
+	-- 	'hrsh7th/nvim-cmp',
+	-- 	requires = {
+	-- 		'hrsh7th/cmp-nvim-lsp',
+	-- 		'hrsh7th/cmp-buffer',
+	-- 		'hrsh7th/cmp-path',
+	-- 	}
+	-- }
 
 	use {
 		'nvim-tree/nvim-web-devicons'
@@ -138,7 +154,7 @@ vim.keymap.set('n', '<leader>fm', builtin.marks, { desc = 'Telescope find marks'
 vim.keymap.set('n', '<leader>fp', builtin.planets, { desc = 'Telescope list planets' })
 vim.keymap.set('n', '<leader>fk', builtin.keymaps, { desc = 'Telescope list keymaps' })
 vim.keymap.set('n', '<leader>fc', builtin.git_commits, { desc = 'Telescope find git commits' })
-vim.keymap.set('n', '<leader>d',  builtin.diagnostics, { desc = 'Telescope diagnostics' })
+vim.keymap.set('n', '<leader>d', builtin.diagnostics, { desc = 'Telescope diagnostics' })
 
 -- }}}
 
@@ -146,25 +162,25 @@ vim.keymap.set('n', '<leader>d',  builtin.diagnostics, { desc = 'Telescope diagn
 
 -- nvim-cmp {{{
 
-local cmp = require 'cmp'
-cmp.setup({
-	window = {
-		completion = cmp.config.window.bordered(),
-		documentation = cmp.config.window.bordered(),
-	},
-	mapping = {
-		['<C-Space>'] = cmp.mapping.complete(),
-		['<C-e>'] = cmp.mapping.close(),
-		['<CR>'] = cmp.mapping.confirm({ select = true }),
-		['<Tab>'] = cmp.mapping.select_next_item(),
-		['<S-Tab>'] = cmp.mapping.select_prev_item(),
-	},
-	sources = cmp.config.sources({
-		{ name = 'nvim_lsp' },
-		{ name = 'path' },
-		{ name = 'buffer' }
-	})
-})
+-- local cmp = require 'cmp'
+-- cmp.setup({
+-- 	window = {
+-- 		completion = cmp.config.window.bordered(),
+-- 		documentation = cmp.config.window.bordered(),
+-- 	},
+-- 	mapping = {
+-- 		['<C-Space>'] = cmp.mapping.complete(),
+-- 		['<C-e>'] = cmp.mapping.close(),
+-- 		['<CR>'] = cmp.mapping.confirm({ select = true }),
+-- 		['<Tab>'] = cmp.mapping.select_next_item(),
+-- 		['<S-Tab>'] = cmp.mapping.select_prev_item(),
+-- 	},
+-- 	sources = cmp.config.sources({
+-- 		{ name = 'nvim_lsp' },
+-- 		{ name = 'path' },
+-- 		{ name = 'buffer' }
+-- 	})
+-- })
 
 -- }}}
 
@@ -173,10 +189,10 @@ cmp.setup({
 -- nvim-lspconfig {{{
 
 local lspconfig = require('lspconfig')
-local capabilities = require('cmp_nvim_lsp').default_capabilities()
-local language_servers = {'jsonls', 'ts_ls', 'pyright', 'angularls', 'cssls', 'html', 'lua_ls'}
+local coq = require('coq')
+local language_servers = { 'jsonls', 'ts_ls', 'pyright', 'angularls', 'cssls', 'html', 'lua_ls' }
 for _, value in ipairs(language_servers) do
-	lspconfig[value].setup { capabilities = capabilities }
+	lspconfig[value].setup { coq.lsp_ensure_capabilities() }
 end
 
 -- }}}
@@ -204,4 +220,3 @@ require('gitsigns').setup()
 require('nvim-autopairs').setup()
 
 -- }}}
-
